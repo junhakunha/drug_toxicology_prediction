@@ -4,6 +4,7 @@ import sys
 sys.path.append(os.getcwd())
 
 import torch
+from torch.utils.data import Dataset
 from torch_geometric.data import Data
 
 import numpy as np
@@ -174,3 +175,34 @@ def smiles_to_graph_GCN(smiles_list, labels):
         data = Data(x=x, edge_index=edge_index, y=y)
         data_list.append(data)
     return data_list
+
+
+class SMILESDataset(Dataset):
+    def __init__(self, smiles_list, labels, tokenizer, max_length=128):
+        self.smiles_list = smiles_list
+        self.labels = labels
+        self.tokenizer = tokenizer
+        self.max_length = max_length
+
+    def __len__(self):
+        return len(self.smiles_list)
+
+    def __getitem__(self, idx):
+        smiles = self.smiles_list[idx]
+        label = self.labels[idx]
+
+        # Tokenize the SMILES string
+        encoding = self.tokenizer(
+            smiles,
+            max_length=self.max_length,
+            padding="max_length",
+            truncation=True,
+            return_tensors="pt",
+        )
+
+        # Return input IDs, attention mask, and label
+        return {
+            "input_ids": encoding["input_ids"].squeeze(0),
+            "attention_mask": encoding["attention_mask"].squeeze(0),
+            "label": torch.tensor(label, dtype=torch.float),
+        }

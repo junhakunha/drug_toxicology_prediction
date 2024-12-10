@@ -55,26 +55,33 @@ class GCNRegressionModel(nn.Module):
 class RGCNRegressionModel(torch.nn.Module):
     def __init__(self, input_dim, num_edge_types):
         super().__init__()
-        self.conv1 = RGCNConv(input_dim, 256, num_relations=num_edge_types)
-        self.conv2 = RGCNConv(256, 256, num_relations=num_edge_types)
-        self.conv3 = RGCNConv(256, 32, num_relations=num_edge_types)
+        self.conv1 = RGCNConv(input_dim, 128, num_relations=num_edge_types)
+        self.conv2 = RGCNConv(128, 128, num_relations=num_edge_types)
+        self.conv3 = RGCNConv(128, 32, num_relations=num_edge_types)
         self.fc = torch.nn.Linear(32, 1)
+        self.dropout = 0.2
 
-    def forward(self, data):
+    def forward(self, data, return_embeds=False):
         x, edge_index, edge_type, batch = data.x, data.edge_index, data.edge_type, data.batch
 
         # Apply RGCN layers with ReLU activation
         x = self.conv1(x, edge_index=edge_index, edge_type=edge_type)
         x = F.relu(x)
+        x = F.dropout(x, p=self.dropout, training=self.training)
         
         x = self.conv2(x, edge_index=edge_index, edge_type=edge_type)
         x = F.relu(x)
+        x = F.dropout(x, p=self.dropout, training=self.training)
 
         x = self.conv3(x, edge_index=edge_index, edge_type=edge_type)
         x = F.relu(x)
+        # x = F.dropout(x, p=self.dropout, training=self.training)
         
         # Global mean pooling to aggregate node features for each graph
         x = global_mean_pool(x, batch)
+
+        if return_embeds: # Return node embeddings early if specified
+            return x
 
         # Fully connected layer for regression output
         out = self.fc(x)

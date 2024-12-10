@@ -1,3 +1,7 @@
 
 /venv/*
 **/__pycache__/*
+/data/model_chkpts/*
+/data/embeddings/*
+
+**/.DS_Store

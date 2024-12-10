@@ -1,6 +1,7 @@
 import os
 import sys
 import argparse
+import time
 
 sys.path.append(os.getcwd())
 sys.path.append('../')
@@ -20,15 +21,13 @@ from torch_geometric.loader import DataLoader
 from rdkit import Chem
 from rdkit.Chem import AllChem
 
-from src.utils.constants import HOME_DIR, DATA_DIR
+from src.utils.constants import HOME_DIR, DATA_DIR, CHKPT_DIR
 from src.utils.data_prep import smiles_to_graph_RCGN, get_data
 from src.model.GCN import RGCNRegressionModel
 
 
 
-def main(args):
-    store_embeddings = args.store_embeddings
-
+def main():
     data = get_data()
     train_x, train_y = data['train_x'], data['train_y']
     val_x, val_y = data['val_x'], data['val_y']
@@ -54,7 +53,6 @@ def main(args):
     val_losses = []
 
     # Training loop with eval on validation set
-    # Train with R2 regularization
     for epoch in range(200):
         model.train()
         total_loss = 0
@@ -98,24 +96,10 @@ def main(args):
     plt.title('Training Loss')
     plt.show()
 
-    # if store_embeddings: store the penultimate layer embeddings for the val set
-    if store_embeddings:
-        embeddings = []
-        for batch in val_loader:
-            batch = batch.to(device)
-            out = model(batch, return_embeddings=True)
-            print(out)
-            embeddings.append(out)
-
-        embeddings = torch.cat(embeddings, dim=0)
-        torch.save(embeddings, os.path.join(HOME_DIR, 'val_embeddings.pt'))
+    # Store the model
+    cur_time = time.strftime('%Y%m%d-%H%M%S')
+    torch.save(model.state_dict(), os.path.join(CHKPT_DIR, f'rgcn_model_{cur_time}.pt'))
 
 
 if __name__ == '__main__':
-    args = argparse.ArgumentParser()
-    # Add a flag to decide whether to store penultimate layer embeddings (default: False)
-    args.add_argument('--store_embeddings', action='store_true', help='Store penultimate layer embeddings')
-
-    args = args.parse_args()
-
-    main(args)
+    main()
