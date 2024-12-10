@@ -12,7 +12,7 @@ import pandas as pd
 
 from rdkit import Chem
 
-from src.utils.constants import DATA_DIR
+from src.utils.constants import DATA_DIR, EMBED_DIR
 
 
 def get_data():
@@ -206,3 +206,49 @@ class SMILESDataset(Dataset):
             "attention_mask": encoding["attention_mask"].squeeze(0),
             "label": torch.tensor(label, dtype=torch.float),
         }
+    
+
+def load_embeddings(GNN_embed_path, LLM_embed_path):
+    """
+    Load embeddings from a directory containing .npy files
+    """
+    gcn_embedding_path = os.path.join(EMBED_DIR, GNN_embed_path)
+    llm_embedding_path = os.path.join(EMBED_DIR, LLM_embed_path)
+
+    gcn_train_x = np.load(os.path.join(gcn_embedding_path, 'train_x.npy'))
+    gcn_val_x = np.load(os.path.join(gcn_embedding_path, 'val_x.npy'))
+    gcn_test_x = np.load(os.path.join(gcn_embedding_path, 'test_x.npy'))
+
+    gcn_train_y = np.load(os.path.join(gcn_embedding_path, 'train_y.npy'))
+    gcn_val_y = np.load(os.path.join(gcn_embedding_path, 'val_y.npy'))
+    gcn_test_y = np.load(os.path.join(gcn_embedding_path, 'test_y.npy'))
+
+    llm_train_x = np.load(os.path.join(llm_embedding_path, 'train_x.npy'))
+    llm_val_x = np.load(os.path.join(llm_embedding_path, 'val_x.npy'))
+    llm_test_x = np.load(os.path.join(llm_embedding_path, 'test_x.npy'))
+
+    llm_train_y = np.load(os.path.join(llm_embedding_path, 'train_y.npy'))
+    llm_val_y = np.load(os.path.join(llm_embedding_path, 'val_y.npy'))
+    llm_test_y = np.load(os.path.join(llm_embedding_path, 'test_y.npy'))
+
+
+
+    # Verify that the labels are the same
+    assert np.allclose(gcn_train_y, llm_train_y)
+    assert np.allclose(gcn_val_y, llm_val_y)
+    assert np.allclose(gcn_test_y, llm_test_y)
+
+    train_x = np.concatenate([gcn_train_x, llm_train_x], axis=1)
+    val_x = np.concatenate([gcn_val_x, llm_val_x], axis=1)
+    test_x = np.concatenate([gcn_test_x, llm_test_x], axis=1)
+
+    data = {
+        'train_x': torch.tensor(train_x, dtype=torch.float),
+        'train_y': torch.tensor(gcn_train_y, dtype=torch.float),
+        'val_x': torch.tensor(val_x, dtype=torch.float),
+        'val_y': torch.tensor(gcn_val_y, dtype=torch.float),
+        'test_x': torch.tensor(test_x, dtype=torch.float),
+        'test_y': torch.tensor(gcn_test_y, dtype=torch.float),
+        'GCN_index': gcn_train_x.shape[1]
+    }
+    return data

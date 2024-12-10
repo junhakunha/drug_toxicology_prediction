@@ -86,6 +86,7 @@ class RGCNRegressionModel(torch.nn.Module):
 
         # Fully connected layer for regression output
         x = self.fc1(x)
+        x = F.relu(x)
         out = self.fc2(x)
         
         return out

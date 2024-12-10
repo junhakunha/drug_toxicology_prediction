@@ -23,13 +23,17 @@ from src.utils.constants import HOME_DIR, DATA_DIR
 
 
 class FusionMLP(nn.Module):
-    def __init__(self):
+    def __init__(self, input_dim):
         super(FusionMLP, self).__init__()
-        self.linear1 = nn.Linear(712*2, 128)
-        self.linear2 = nn.Linear(128, 1)
+        self.linear1 = nn.Linear(input_dim, 128)
+        self.linear2 = nn.Linear(128, 64)
+        self.linear3 = nn.Linear(64, 64)
+        self.linear4 = nn.Linear(64, 1)
 
     def forward(self, x):
         x = F.relu(self.linear1(x))
-        x = self.linear2(x)
+        x = F.relu(self.linear2(x))
+        x = F.relu(self.linear3(x))
+        x = self.linear4(x)
 
         return x

@@ -62,9 +62,13 @@ def main():
 
     # Training loop
     # Draw a graph of training loss, validation loss
-    epochs = 1
+    # Save the best model and tokenizer based on validation loss
+    epochs = 20
     train_losses = []
     val_losses = []
+    min_val_loss = float('inf')
+    min_val_epoch = 0
+    min_val_model = None
     for epoch in range(epochs):
         model.train()
 
@@ -88,7 +92,8 @@ def main():
             loss.backward()
             optimizer.step()
         
-        train_losses.append(total_train_loss / len(train_loader))
+        total_train_loss /= len(train_loader)
+        train_losses.append(total_train_loss)
 
         # Validation
         model.eval()
@@ -108,8 +113,15 @@ def main():
                 # Compute loss
                 loss = loss_fn(predictions, labels)
                 total_val_loss += loss.item()
+        
+        total_val_loss /= len(val_loader)
+        val_losses.append(total_val_loss)
 
-        val_losses.append(total_val_loss / len(val_loader))
+        # Save best model based on validation loss
+        if total_val_loss < min_val_loss:
+            min_val_loss = total_val_loss
+            min_val_epoch = epoch
+            min_val_model = model.state_dict()
 
         print(f"Epoch {epoch + 1}, Train Loss: {train_losses[-1]:.4f}, Val Loss: {val_losses[-1]:.4f}")
 
@@ -122,9 +134,14 @@ def main():
     plt.legend()
     plt.show()
 
-    # Save both model and tokenizer
+    # Save both model and tokenizer (save the best model based on validation loss)
     cur_time = time.strftime('%Y%m%d-%H%M%S')
-    save_path = os.path.join(CHKPT_DIR, f'LLM_{cur_time}')
+    save_path = os.path.join(CHKPT_DIR, f'LLM_{cur_time}_epoch_{min_val_epoch}')
+
+    # Reinitialize the model to load the best model
+    model = RobertaWithEmbeddings.from_pretrained("seyonec/ChemBERTa-zinc-base-v1", num_labels=1)
+    model.to(device)
+    model.load_state_dict(min_val_model)
     model.save_pretrained(save_path)
     tokenizer.save_pretrained(save_path)
 
