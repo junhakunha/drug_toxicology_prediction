@@ -55,10 +55,10 @@ class GCNRegressionModel(nn.Module):
 class RGCNRegressionModel(torch.nn.Module):
     def __init__(self, input_dim, num_edge_types):
         super().__init__()
-        self.conv1 = RGCNConv(input_dim, 128, num_relations=num_edge_types)
-        self.conv2 = RGCNConv(128, 128, num_relations=num_edge_types)
-        self.conv3 = RGCNConv(128, 32, num_relations=num_edge_types)
-        self.fc = torch.nn.Linear(32, 1)
+        self.conv1 = RGCNConv(input_dim, 1024, num_relations=num_edge_types)
+        self.conv2 = RGCNConv(1024, 1024, num_relations=num_edge_types)
+        self.conv3 = RGCNConv(1024, 712, num_relations=num_edge_types)
+        self.fc = torch.nn.Linear(712, 1)
         self.dropout = 0.2
 
     def forward(self, data, return_embeds=False):

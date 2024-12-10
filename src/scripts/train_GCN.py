@@ -2,6 +2,7 @@ import os
 import sys
 import argparse
 import time
+from tqdm import tqdm
 
 sys.path.append(os.getcwd())
 sys.path.append('../')
@@ -21,7 +22,7 @@ from torch_geometric.loader import DataLoader
 from rdkit import Chem
 from rdkit.Chem import AllChem
 
-from src.utils.constants import HOME_DIR, DATA_DIR, CHKPT_DIR
+from src.utils.constants import HOME_DIR, DATA_DIR, CHKPT_DIR, IMAGE_DIR
 from src.utils.data_prep import smiles_to_graph_RCGN, get_data
 from src.model.GCN import RGCNRegressionModel
 
@@ -53,7 +54,7 @@ def main():
     val_losses = []
 
     # Training loop with eval on validation set
-    for epoch in range(200):
+    for epoch in tqdm(range(100)):
         model.train()
         total_loss = 0
 
@@ -73,8 +74,10 @@ def main():
         total_loss /= len(train_loader)
         train_losses.append(total_loss)
 
-        # Evaluate on validation set
+        # Evaluate on validation set (save best model based on validation loss)
         model.eval()
+        min_val_loss = np.inf
+        min_val_epoch = 0
         with torch.no_grad():
             val_loss = 0
             for batch in val_loader:
@@ -85,7 +88,13 @@ def main():
             val_loss /= len(val_loader)
             val_losses.append(val_loss)
 
-        if epoch % 20 == 0:
+            if val_loss < min_val_loss:
+                min_val_loss = val_loss
+                min_val_epoch = epoch
+                best_model = model.state_dict()
+
+
+        if epoch % 5 == 0:
             print(f"Epoch {epoch+1}, Train Loss: {total_loss:.4f}, Val Loss: {val_loss:.4f}")
 
     # Plot training loss
@@ -94,12 +103,16 @@ def main():
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
     plt.title('Training Loss')
-    plt.show()
+    
+    cur_time = time.strftime('%Y%m%d-%H%M%S')
+
+    # Save image
+    plt.savefig(os.path.join(IMAGE_DIR, f'GNN_loss_{cur_time}.png'))
 
     # Store the model
-    cur_time = time.strftime('%Y%m%d-%H%M%S')
-    torch.save(model.state_dict(), os.path.join(CHKPT_DIR, f'rgcn_model_{cur_time}.pt'))
+    torch.save(best_model, os.path.join(CHKPT_DIR, f'rgcn_model_{cur_time}_epoch_{min_val_epoch}.pt'))
 
+    plt.show()
 
 if __name__ == '__main__':
     main()
