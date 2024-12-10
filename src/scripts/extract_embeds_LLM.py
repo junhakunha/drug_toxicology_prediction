@@ -34,15 +34,22 @@ from src.model.LLM import RobertaWithEmbeddings
 
 def main(args):
     model_chkpt_path = args.model
+    split = args.split
 
     tokenizer = RobertaTokenizer.from_pretrained(model_chkpt_path)
     model = RobertaWithEmbeddings.from_pretrained(model_chkpt_path, num_labels=1)  # For regression
 
-
     data = get_data()
-    val_x, val_y = data['val_x'], data['val_y']
+    if split == 'train':
+        x, y = data['train_x'], data['train_y']
+    elif split == 'val':
+        x, y = data['val_x'], data['val_y']
+    elif split == 'test':
+        x, y = data['test_x'], data['test_y']
+    else:
+        raise ValueError('Invalid split argument. Choose from train/val/test')
 
-    val_dataset = SMILESDataset(val_x, val_y, tokenizer)
+    val_dataset = SMILESDataset(x, y, tokenizer)
     val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -69,6 +76,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Extract embeddings from a trained ChemBERTa model')
     parser.add_argument('--model', type=str, default=model_chkpt_path, help='Path to the saved ChemBERTa model checkpoint')
+    parser.add_argument('--split', type=str, default='val', help='Data split to extract embeddings from (train/val/test)')
     args = parser.parse_args()
     
     main(args)

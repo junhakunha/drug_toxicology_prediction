@@ -24,11 +24,11 @@ def get_data():
     val_data = pd.read_csv(val_data_path)
     test_data = pd.read_csv(test_data_path)
 
-    train_x = train_data['Canonical_QSARr']
+    train_x = train_data['Canonical_SMILES']
     train_y = train_data['LD50_mgkg'].to_numpy()
-    val_x = val_data['Canonical_QSARr']
+    val_x = val_data['Canonical_SMILES']
     val_y = val_data['LD50_mgkg'].to_numpy()
-    test_x = test_data['Canonical_QSARr']
+    test_x = test_data['Canonical_SMILES']
     test_y = test_data['LD50_mgkg'].to_numpy()
 
     y_train = list(np.log(train_y))

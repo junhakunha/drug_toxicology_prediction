@@ -58,7 +58,8 @@ class RGCNRegressionModel(torch.nn.Module):
         self.conv1 = RGCNConv(input_dim, 1024, num_relations=num_edge_types)
         self.conv2 = RGCNConv(1024, 1024, num_relations=num_edge_types)
         self.conv3 = RGCNConv(1024, 712, num_relations=num_edge_types)
-        self.fc = torch.nn.Linear(712, 1)
+        self.fc1 = torch.nn.Linear(712, 64)
+        self.fc2 = torch.nn.Linear(64, 1)
         self.dropout = 0.2
 
     def forward(self, data, return_embeds=False):
@@ -84,6 +85,7 @@ class RGCNRegressionModel(torch.nn.Module):
             return x
 
         # Fully connected layer for regression output
-        out = self.fc(x)
+        x = self.fc1(x)
+        out = self.fc2(x)
         
         return out

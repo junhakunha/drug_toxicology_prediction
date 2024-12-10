@@ -44,7 +44,7 @@ def main():
     train_loader = DataLoader(train_data, batch_size=64, shuffle=True)
     val_loader = DataLoader(val_data, batch_size=64, shuffle=False)
     test_loader = DataLoader(test_data, batch_size=64, shuffle=False)
-
+    
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = RGCNRegressionModel(input_dim=13, num_edge_types=4).to(device)  # Adjust input_dim based on node features
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
@@ -54,7 +54,7 @@ def main():
     val_losses = []
 
     # Training loop with eval on validation set
-    for epoch in tqdm(range(100)):
+    for epoch in tqdm(range(200)):
         model.train()
         total_loss = 0
 
@@ -65,7 +65,6 @@ def main():
             out = model(batch)
 
             loss = criterion(out.squeeze(), batch.y)
-
             loss.backward()
             
             optimizer.step()
@@ -92,7 +91,6 @@ def main():
                 min_val_loss = val_loss
                 min_val_epoch = epoch
                 best_model = model.state_dict()
-
 
         if epoch % 5 == 0:
             print(f"Epoch {epoch+1}, Train Loss: {total_loss:.4f}, Val Loss: {val_loss:.4f}")
