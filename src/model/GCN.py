@@ -57,8 +57,8 @@ class RGCNRegressionModel(torch.nn.Module):
         super().__init__()
         self.conv1 = RGCNConv(input_dim, 1024, num_relations=num_edge_types)
         self.conv2 = RGCNConv(1024, 1024, num_relations=num_edge_types)
-        self.conv3 = RGCNConv(1024, 712, num_relations=num_edge_types)
-        self.fc1 = torch.nn.Linear(712, 64)
+        self.conv3 = RGCNConv(1024, 768, num_relations=num_edge_types)
+        self.fc1 = torch.nn.Linear(768, 64)
         self.fc2 = torch.nn.Linear(64, 1)
         self.dropout = 0.2
 

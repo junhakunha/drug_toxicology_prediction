@@ -79,7 +79,7 @@ def main(args):
 
 
 if __name__ == '__main__':
-    model_chkpt_path = CHKPT_DIR + 'LLM_20241210-004824_epoch_11'
+    model_chkpt_path = CHKPT_DIR + 'LLM_20241210-035121_epoch_13'
 
     parser = argparse.ArgumentParser(description='Extract embeddings from a trained ChemBERTa model')
     parser.add_argument('--model', type=str, default=model_chkpt_path, help='Path to the saved ChemBERTa model checkpoint')

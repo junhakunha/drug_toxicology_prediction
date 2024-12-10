@@ -24,7 +24,7 @@ from transformers import RobertaTokenizer, RobertaModel, RobertaForSequenceClass
 from rdkit import Chem
 from rdkit.Chem import AllChem
 
-from src.utils.constants import HOME_DIR, DATA_DIR, CHKPT_DIR
+from src.utils.constants import HOME_DIR, DATA_DIR, CHKPT_DIR, LOSS_DIR
 from src.utils.data_prep import smiles_to_graph_RCGN, get_data, SMILESDataset
 from src.model.GCN import RGCNRegressionModel
 from src.model.LLM import RobertaWithEmbeddings
@@ -63,7 +63,7 @@ def main():
     # Training loop
     # Draw a graph of training loss, validation loss
     # Save the best model and tokenizer based on validation loss
-    epochs = 20
+    epochs = 30
     train_losses = []
     val_losses = []
     min_val_loss = float('inf')
@@ -144,6 +144,11 @@ def main():
     model.load_state_dict(min_val_model)
     model.save_pretrained(save_path)
     tokenizer.save_pretrained(save_path)
+
+    # Save the training and validation losses
+    losses = pd.DataFrame({'train_loss': train_losses, 'val_loss': val_losses})
+    losses.to_csv(os.path.join(LOSS_DIR, f'LLM_{cur_time}_epoch_{min_val_epoch}.csv'))
+
 
 
 if __name__ == '__main__':

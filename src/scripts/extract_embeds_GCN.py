@@ -70,7 +70,7 @@ def main(args):
 
 
 if __name__ == '__main__':
-    model_chkpt_path = CHKPT_DIR + 'rgcn_model_20241209-230445_epoch_199.pt'
+    model_chkpt_path = CHKPT_DIR + 'rgcn_model_20241210-043903_epoch_199.pt'
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', type=str, default=model_chkpt_path)

@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import time
 
 import torch
 import torch.nn as nn
@@ -19,14 +20,14 @@ from torch_geometric.loader import DataLoader
 from rdkit import Chem
 from rdkit.Chem import AllChem
 
-from src.utils.constants import HOME_DIR, DATA_DIR, EMBED_DIR
+from src.utils.constants import HOME_DIR, DATA_DIR, EMBED_DIR, CHKPT_DIR, LOSS_DIR
 from src.utils.data_prep import load_embeddings
 from src.model.fusion import FusionMLP
 
 
 def main():
     # Load embeddings
-    data = load_embeddings('GNN_embeddings_20241209-230445', 'LLM_embeddings_20241210-004824')
+    data = load_embeddings('GNN_embeddings_20241210-043903', 'LLM_embeddings_20241210-035121')
 
     train_x, train_y = data['train_x'], data['train_y']
     val_x, val_y = data['val_x'], data['val_y']
@@ -48,7 +49,11 @@ def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model.to(device)
 
-    
+    # Training loop with eval on validation set
+    # Store model with best validation loss
+    min_val_loss = np.inf
+    min_val_model = None
+    min_val_epoch = None
     for epoch in range(100):
         model.train()
         total_train_loss = 0
@@ -77,9 +82,24 @@ def main():
                 loss = criterion(y_pred, y)
                 total_val_loss += loss.item()
         total_val_loss /= len(val_loader)
+
+        if total_val_loss < min_val_loss:
+            min_val_loss = total_val_loss
+            min_val_model = model.state_dict()
+            min_val_epoch = epoch
+
         val_losses.append(total_val_loss)
 
         print(f'Epoch {epoch+1}, Train Loss: {train_losses[-1]:.4f}, Val Loss: {val_losses[-1]:.4f}')
+
+    # Save best model
+    cur_time = time.strftime('%Y%m%d-%H%M%S')
+    torch.save(min_val_model, os.path.join(CHKPT_DIR, f'fusion_{cur_time}_epoch_{min_val_epoch}.pth'))
+
+    # Save losses
+    losses = pd.DataFrame({'train_loss': train_losses, 'val_loss': val_losses})
+    losses.to_csv(os.path.join(LOSS_DIR, f'fusion_{cur_time}_epoch_{min_val_epoch}.csv'), index=False)
+
 
 if __name__ == '__main__':
     main()

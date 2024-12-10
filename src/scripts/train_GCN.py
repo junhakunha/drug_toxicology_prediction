@@ -22,7 +22,7 @@ from torch_geometric.loader import DataLoader
 from rdkit import Chem
 from rdkit.Chem import AllChem
 
-from src.utils.constants import HOME_DIR, DATA_DIR, CHKPT_DIR, IMAGE_DIR
+from src.utils.constants import HOME_DIR, DATA_DIR, CHKPT_DIR, IMAGE_DIR, LOSS_DIR
 from src.utils.data_prep import smiles_to_graph_RCGN, get_data
 from src.model.GCN import RGCNRegressionModel
 
@@ -109,6 +109,10 @@ def main():
 
     # Store the model
     torch.save(best_model, os.path.join(CHKPT_DIR, f'rgcn_model_{cur_time}_epoch_{min_val_epoch}.pt'))
+
+    # Store the losses
+    losses = pd.DataFrame({'train_loss': train_losses, 'val_loss': val_losses})
+    losses.to_csv(os.path.join(LOSS_DIR, f'rgcn_model_{cur_time}_epoch_{min_val_epoch}.csv'), index=False)
 
     plt.show()
 
